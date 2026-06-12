@@ -5,11 +5,13 @@ import cors from 'cors';
 import qrcode from 'qrcode';
 import config from './config.js';
 import TranscriptionService from './transcription.js';
+import TextToSpeechService from './tts.js';
 import { createIngressController } from './lib/ingress.js';
 import { createAuthMiddleware } from './lib/auth.js';
 import { WebhookDelivery } from './lib/webhook-delivery.js';
 import { attachMessageHandler } from './lib/message-handler.js';
 import { registerRoutes } from './lib/routes.js';
+import { sendVoiceToChat } from './lib/voice-sender.js';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -19,6 +21,7 @@ const __dirname = dirname(__filename);
 const SESSION_DIR = process.env.SESSION_DIR || '/tmp/.wwebjs_auth';
 
 const transcriptionService = new TranscriptionService();
+const ttsService = new TextToSpeechService();
 const ingress = createIngressController({ defaultSlackSec: 5, defaultMaxAgeSec: 600 });
 const webhookDelivery = new WebhookDelivery(config, { dataDir: join(__dirname, '.data') });
 
@@ -66,6 +69,7 @@ registerRoutes(app, {
   webhookDelivery,
   getClientState,
   sendMessageToChat,
+  sendVoiceToChat: (args) => sendVoiceToChat({ ...args, ttsService }),
   MessageMedia,
   envFile: join(__dirname, '.env'),
   serviceDir: __dirname,

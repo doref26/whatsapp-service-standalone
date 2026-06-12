@@ -1,13 +1,7 @@
 /**
  * Example external backend that receives WhatsApp messages and replies via the gateway API.
  *
- * Run:
- *   1. npm start          (WhatsApp service on port 3002)
- *   2. node integrations/example-backend.js   (this file on port 3000)
- *
- * Set in whatsapp-service .env:
- *   WEBHOOK_URL=http://127.0.0.1:3000/whatsapp/webhook
- *   API_KEY=dev-secret     (optional but recommended)
+ * Replace generateReply() with your LLM — return ONLY the text to send (no logs/meta).
  */
 import express from 'express';
 import fetch from 'node-fetch';
@@ -19,6 +13,7 @@ const PORT = process.env.PORT || process.env.BACKEND_PORT || 3000;
 const WHATSAPP_API = process.env.WHATSAPP_API_URL || 'http://127.0.0.1:3003';
 const API_KEY = process.env.API_KEY || '';
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
+const REPLY_WITH_VOICE = process.env.REPLY_WITH_VOICE === 'true';
 
 function whatsappHeaders() {
   const headers = { 'Content-Type': 'application/json' };
@@ -26,11 +21,27 @@ function whatsappHeaders() {
   return headers;
 }
 
-async function sendWhatsAppReply(chatId, message, replyToMessageId) {
-  const response = await fetch(`${WHATSAPP_API}/api/send`, {
+function buildVoiceOptions() {
+  const options = {};
+  if (process.env.TTS_STYLE) options.style = process.env.TTS_STYLE;
+  if (process.env.TTS_VOICE) options.voice = process.env.TTS_VOICE;
+  if (process.env.TTS_RATE) options.rate = process.env.TTS_RATE;
+  if (process.env.TTS_PITCH) options.pitch = process.env.TTS_PITCH;
+  if (process.env.TTS_VOLUME) options.volume = process.env.TTS_VOLUME;
+  if (process.env.OPENAI_TTS_VOICE) options.openaiVoice = process.env.OPENAI_TTS_VOICE;
+  if (process.env.OPENAI_TTS_SPEED) options.speed = process.env.OPENAI_TTS_SPEED;
+  return options;
+}
+
+async function sendWhatsAppReply(chatId, message, replyToMessageId, { asVoice = false } = {}) {
+  const endpoint = asVoice ? '/api/send-voice' : '/api/send';
+  const body = { chatId, message, replyToMessageId };
+  if (asVoice) Object.assign(body, buildVoiceOptions());
+
+  const response = await fetch(`${WHATSAPP_API}${endpoint}`, {
     method: 'POST',
     headers: whatsappHeaders(),
-    body: JSON.stringify({ chatId, message, replyToMessageId }),
+    body: JSON.stringify(body),
   });
   if (!response.ok) {
     const text = await response.text();
@@ -40,14 +51,15 @@ async function sendWhatsAppReply(chatId, message, replyToMessageId) {
 }
 
 /**
- * Replace this with your LLM call (OpenAI, Anthropic, local model, etc.)
+ * Return ONLY the message text to send to the user.
+ * Plug your LLM here — do not include debug/meta text.
  */
 async function generateReply(message) {
   const userText = message.body?.trim();
-  if (!userText) return 'I received your message but it had no text content.';
+  if (!userText) return null;
 
-  // Simple echo bot — swap for real LLM integration
-  return `You said: "${userText}"\n\n(This is the example backend — plug in your LLM here.)`;
+  // TODO: replace with your LLM call
+  return userText;
 }
 
 app.post('/whatsapp/webhook', async (req, res) => {
@@ -62,8 +74,11 @@ app.post('/whatsapp/webhook', async (req, res) => {
 
   try {
     const reply = await generateReply(message);
-    await sendWhatsAppReply(message.chat.id, reply, message.id);
-    console.log(`[reply] Sent to ${message.chat.name}`);
+    if (!reply) return;
+
+    const replyAsVoice = REPLY_WITH_VOICE || message.type === 'voice';
+    await sendWhatsAppReply(message.chat.id, reply, message.id, { asVoice: replyAsVoice });
+    console.log(`[reply] Sent ${replyAsVoice ? 'voice' : 'text'} to ${message.chat.name}`);
   } catch (error) {
     console.error('[reply] Failed:', error.message);
   }
@@ -75,4 +90,5 @@ app.listen(PORT, () => {
   console.log(`Example backend listening on http://127.0.0.1:${PORT}`);
   console.log(`Webhook: POST http://127.0.0.1:${PORT}/whatsapp/webhook`);
   console.log(`WhatsApp API: ${WHATSAPP_API}`);
+  console.log(`Voice replies: ${REPLY_WITH_VOICE ? 'always' : 'when inbound message is voice'}`);
 });

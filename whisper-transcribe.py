@@ -8,6 +8,25 @@ import os
 import whisper
 
 
+def setup_stdio_utf8():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+
+
+def write_stdout(text):
+    """Write UTF-8 to stdout without Windows cp1252 encoding errors."""
+    sys.stdout.buffer.write(text.encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+    sys.stdout.buffer.flush()
+
+
+def write_stderr(text):
+    sys.stderr.buffer.write(text.encode("utf-8"))
+    sys.stderr.buffer.write(b"\n")
+    sys.stderr.buffer.flush()
+
+
 def setup_ffmpeg_path():
     ffmpeg_path = os.environ.get("FFMPEG_PATH")
     if ffmpeg_path and os.path.isfile(ffmpeg_path):
@@ -22,17 +41,18 @@ def transcribe_audio(audio_path, model_name="base", language="auto"):
         if language and language.lower() != "auto":
             kwargs["language"] = language
         result = model.transcribe(audio_path, **kwargs)
-        print(result["text"].strip())
+        write_stdout(result["text"].strip())
         return 0
     except Exception as e:
-        print(f"Error: {str(e)}", file=sys.stderr)
+        write_stderr(f"Error: {str(e)}")
         return 1
 
 
 if __name__ == "__main__":
+    setup_stdio_utf8()
     setup_ffmpeg_path()
     if len(sys.argv) < 2:
-        print("Usage: python whisper-transcribe.py <audio_file> [model] [language]", file=sys.stderr)
+        write_stderr("Usage: python whisper-transcribe.py <audio_file> [model] [language]")
         sys.exit(1)
 
     audio_path = sys.argv[1]

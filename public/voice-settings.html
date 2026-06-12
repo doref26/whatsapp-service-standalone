@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice Settings · WhatsApp Service</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --card: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9cb3;
+      --accent: #25d366;
+      --accent-dim: #1a9e4b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(145deg, #0f1419 0%, #162033 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+    .sub { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .card h2 { font-size: 1rem; margin: 0 0 1rem; color: var(--accent); }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.35rem; }
+    select, input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0f1419;
+      color: var(--text);
+      font-size: 0.95rem;
+      margin-bottom: 0.75rem;
+    }
+    .styles {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.6rem;
+    }
+    .style-btn {
+      border: 2px solid var(--border);
+      background: #0f1419;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 0.75rem 0.5rem;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .style-btn:hover { border-color: var(--accent-dim); }
+    .style-btn.active {
+      border-color: var(--accent);
+      background: rgba(37, 211, 102, 0.12);
+    }
+    .style-btn .name { font-weight: 600; font-size: 0.9rem; }
+    .style-btn .desc { font-size: 0.72rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.3; }
+    .sliders { display: grid; gap: 1rem; }
+    .slider-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: center; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .val { font-family: monospace; font-size: 0.85rem; min-width: 4.5rem; text-align: left; }
+    .preview {
+      background: #0f1419;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-family: monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: #a8d4b8;
+    }
+    .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+    button.primary {
+      background: var(--accent);
+      color: #052e16;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.4rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    button.primary:hover { background: #2ee06a; }
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem 1.2rem;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 1rem;
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .status.ok { display: block; background: rgba(37,211,102,0.15); color: #86efac; }
+    .status.err { display: block; background: rgba(239,68,68,0.15); color: #fca5a5; }
+    .fine-tune { margin-top: 0.5rem; }
+    .fine-tune summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+    .hint { font-size: 0.78rem; color: var(--muted); margin-top: -0.4rem; margin-bottom: 0.75rem; }
+    #apiKeyRow { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🎤 הגדרות קול</h1>
+    <p class="sub">בחר סגנון דמות, קול וכיוונון עדין. השינויים נשמרים ל־.env</p>
+
+    <div class="card">
+      <h2>סגנון / אופי</h2>
+      <div class="styles" id="styleGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>קול</h2>
+      <label for="voice">דובר</label>
+      <select id="voice"></select>
+
+      <label for="provider">ספק TTS</label>
+      <select id="provider">
+        <option value="edge">Edge TTS (חינם, עברית)</option>
+        <option value="openai">OpenAI TTS</option>
+      </select>
+
+      <div id="apiKeyRow">
+        <label for="apiKey">API Key (נדרש לשמירה)</label>
+        <input type="password" id="apiKey" placeholder="X-API-Key" />
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>כיוונון עדין</h2>
+      <p class="hint">אופציונלי — דורס את ערכי הסגנון. השאר ריק לשימוש בערכי הסגנון בלבד.</p>
+      <details class="fine-tune" open>
+        <summary>Rate · Pitch · Volume</summary>
+        <div class="sliders" style="margin-top: 1rem;">
+          <div>
+            <label>מהירות (Rate): <span class="val" id="rateVal">—</span></label>
+            <input type="range" id="rateSlider" min="-30" max="30" value="0" />
+          </div>
+          <div>
+            <label>גובה (Pitch Hz): <span class="val" id="pitchVal">—</span></label>
+            <input type="range" id="pitchSlider" min="-20" max="20" value="0" />
+          </div>
+          <div>
+            <label>עוצמה (Volume): <span class="val" id="volumeVal">—</span></label>
+            <input type="range" id="volumeSlider" min="-30" max="30" value="0" />
+          </div>
+        </div>
+        <label style="margin-top: 0.75rem;">
+          <input type="checkbox" id="useFineTune" /> השתמש בכיוונון עדין (override)
+        </label>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>תצוגה מקדימה (ערכים שיופעלו)</h2>
+      <div class="preview" id="preview">טוען...</div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="saveBtn">💾 שמור הגדרות</button>
+      <button class="secondary" id="resetBtn">איפוס כיוונון עדין</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let catalog = { styles: [], edge: { voices: [] } };
+    let current = {};
+    let selectedStyle = 'neutral';
+    let apiKeyRequired = false;
+
+    function headers() {
+      const h = { 'Content-Type': 'application/json' };
+      const key = $('apiKey').value.trim();
+      if (key) h['X-API-Key'] = key;
+      return h;
+    }
+
+    function pct(n) { return (n >= 0 ? '+' : '') + n + '%'; }
+    function hz(n) { return (n >= 0 ? '+' : '') + n + 'Hz'; }
+
+    function parsePct(s) {
+      if (!s) return 0;
+      return parseInt(String(s).replace('%', ''), 10) || 0;
+    }
+    function parseHz(s) {
+      if (!s) return 0;
+      return parseInt(String(s).replace('Hz', ''), 10) || 0;
+    }
+
+    function buildPayload() {
+      const payload = {
+        provider: $('provider').value,
+        voice: $('voice').value,
+        style: selectedStyle,
+      };
+      if ($('useFineTune').checked) {
+        payload.rate = pct(parseInt($('rateSlider').value, 10));
+        payload.pitch = hz(parseInt($('pitchSlider').value, 10));
+        payload.volume = pct(parseInt($('volumeSlider').value, 10));
+      } else {
+        payload.rate = '';
+        payload.pitch = '';
+        payload.volume = '';
+      }
+      return payload;
+    }
+
+    function updateSliderLabels() {
+      $('rateVal').textContent = pct($('rateSlider').value);
+      $('pitchVal').textContent = hz($('pitchSlider').value);
+      $('volumeVal').textContent = pct($('volumeSlider').value);
+    }
+
+    async function refreshPreview() {
+      try {
+        const res = await fetch('/api/tts/settings/preview', {
+          method: 'POST',
+          headers: headers(),
+          body: JSON.stringify(buildPayload()),
+        });
+        const data = await res.json();
+        $('preview').textContent = [
+          `style: ${data.resolved.style}`,
+          `voice: ${data.resolved.voice}`,
+          `rate: ${data.resolved.rate}`,
+          `pitch: ${data.resolved.pitch}`,
+          `volume: ${data.resolved.volume}`,
+        ].join('\n');
+      } catch (e) {
+        $('preview').textContent = 'Could not load preview';
+      }
+    }
+
+    function renderStyles() {
+      const grid = $('styleGrid');
+      grid.innerHTML = '';
+      for (const s of catalog.styles) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'style-btn' + (s.id === selectedStyle ? ' active' : '');
+        btn.innerHTML = `<div class="name">${s.label}</div><div class="desc">${s.description}</div>`;
+        btn.onclick = () => {
+          selectedStyle = s.id;
+          renderStyles();
+          refreshPreview();
+        };
+        grid.appendChild(btn);
+      }
+    }
+
+    function renderVoices() {
+      const sel = $('voice');
+      sel.innerHTML = '';
+      for (const v of catalog.edge.voices) {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        opt.textContent = v.label;
+        sel.appendChild(opt);
+      }
+      if (current.voice) sel.value = current.voice;
+    }
+
+    function applyCurrentToForm() {
+      selectedStyle = current.style || 'neutral';
+      $('provider').value = current.provider || 'edge';
+      $('voice').value = current.voice || 'he-IL-HilaNeural';
+
+      const hasFine = Boolean(current.rate || current.pitch || current.volume);
+      $('useFineTune').checked = hasFine;
+      $('rateSlider').value = parsePct(current.rate);
+      $('pitchSlider').value = parseHz(current.pitch);
+      $('volumeSlider').value = parsePct(current.volume);
+      updateSliderLabels();
+      renderStyles();
+    }
+
+    function showStatus(msg, ok) {
+      const el = $('status');
+      el.textContent = msg;
+      el.className = 'status ' + (ok ? 'ok' : 'err');
+    }
+
+    async function load() {
+      const [settingsRes, voicesRes, statusRes] = await Promise.all([
+        fetch('/api/tts/settings'),
+        fetch('/api/tts/voices'),
+        fetch('/api/status'),
+      ]);
+      catalog = await voicesRes.json();
+      current = await settingsRes.json();
+      const status = await statusRes.json();
+      apiKeyRequired = status.apiKeyRequired;
+      $('apiKeyRow').style.display = apiKeyRequired ? 'block' : 'none';
+
+      catalog.styles = catalog.styles || [];
+      renderVoices();
+      applyCurrentToForm();
+      refreshPreview();
+    }
+
+    async function save() {
+      try {
+        const res = await fetch('/api/tts/settings', {
+          method: 'POST',
+          headers: headers(),
+          body: JSON.stringify(buildPayload()),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || data.message || 'Save failed');
+        current = data;
+        applyCurrentToForm();
+        showStatus('✅ ההגדרות נשמרו בהצלחה', true);
+        refreshPreview();
+      } catch (e) {
+        showStatus('❌ ' + e.message, false);
+      }
+    }
+
+    ['rateSlider', 'pitchSlider', 'volumeSlider'].forEach((id) => {
+      $(id).addEventListener('input', () => {
+        updateSliderLabels();
+        refreshPreview();
+      });
+    });
+    ['voice', 'provider', 'useFineTune'].forEach((id) => {
+      $(id).addEventListener('change', refreshPreview);
+    });
+
+    $('saveBtn').onclick = save;
+    $('resetBtn').onclick = () => {
+      $('useFineTune').checked = false;
+      $('rateSlider').value = 0;
+      $('pitchSlider').value = 0;
+      $('volumeSlider').value = 0;
+      updateSliderLabels();
+      refreshPreview();
+    };
+
+    load();
+  </script>
+</body>
+</html>

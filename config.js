@@ -37,6 +37,19 @@ export const config = {
     openaiApiKey: process.env.OPENAI_API_KEY || '',
   },
 
+  tts: {
+    provider: process.env.TTS_PROVIDER || 'edge',
+    voice: process.env.TTS_VOICE || 'he-IL-HilaNeural',
+    style: process.env.TTS_STYLE || '',
+    rate: process.env.TTS_RATE || '',
+    pitch: process.env.TTS_PITCH || '',
+    volume: process.env.TTS_VOLUME || '',
+    openaiApiKey: process.env.OPENAI_API_KEY || '',
+    openaiModel: process.env.OPENAI_TTS_MODEL || 'tts-1',
+    openaiVoice: process.env.OPENAI_TTS_VOICE || 'nova',
+    openaiSpeed: parseFloat(process.env.OPENAI_TTS_SPEED || '1.0'),
+  },
+
   webhook: {
     includeMediaBase64: process.env.WEBHOOK_INCLUDE_MEDIA !== 'false',
     secret: process.env.WEBHOOK_SECRET || '',

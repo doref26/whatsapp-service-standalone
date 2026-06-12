@@ -5,12 +5,14 @@ import express from 'express';
 import cors from 'cors';
 import config from './config.js';
 import TranscriptionService from './transcription.js';
+import TextToSpeechService from './tts.js';
 import WebSearchService from './web-search.js';
 import { createIngressController } from './lib/ingress.js';
 import { createAuthMiddleware } from './lib/auth.js';
 import { WebhookDelivery } from './lib/webhook-delivery.js';
 import { attachMessageHandler } from './lib/message-handler.js';
 import { registerRoutes, saveWebhookUrlToEnv } from './lib/routes.js';
+import { sendVoiceToChat } from './lib/voice-sender.js';
 import { createServer } from 'net';
 import { existsSync, rmSync } from 'fs';
 import { join } from 'path';
@@ -23,6 +25,7 @@ const ENV_FILE = join(__dirname, '.env');
 const isWindows = process.platform === 'win32';
 
 const transcriptionService = new TranscriptionService();
+const ttsService = new TextToSpeechService();
 const webSearch = new WebSearchService();
 const ingress = createIngressController({ defaultSlackSec: 120, defaultMaxAgeSec: 600 });
 const webhookDelivery = new WebhookDelivery(config, { dataDir: join(__dirname, '.data') });
@@ -150,6 +153,7 @@ registerRoutes(app, {
   webhookDelivery,
   getClientState,
   sendMessageToChat,
+  sendVoiceToChat: (args) => sendVoiceToChat({ ...args, ttsService }),
   MessageMedia,
   envFile: ENV_FILE,
   serviceDir: __dirname,
@@ -394,6 +398,7 @@ async function startHttpServer() {
   await new Promise((resolve, reject) => {
     const server = app.listen(port, host, () => {
       console.log(`🌐 API Server started on http://${host}:${port}`);
+      console.log(`   Voice settings: http://${host}:${port}/settings/voice`);
       resolve(server);
     });
     server.on('error', reject);

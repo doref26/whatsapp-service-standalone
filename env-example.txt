@@ -31,6 +31,21 @@ WHISPER_MODEL=base
 # Full paths (recommended on Windows when using start-all.bat)
 # PYTHON_PATH=C:\Users\YOUR_USER\AppData\Local\Programs\Python\Python310\python.exe
 # FFMPEG_PATH=C:\Users\YOUR_USER\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.1-full_build\bin\ffmpeg.exe
+
+# Voice replies (text-to-speech)
+# TTS_PROVIDER=edge
+# TTS_VOICE=he-IL-HilaNeural
+# TTS_STYLE=joyful
+# Character styles: neutral, joyful, sad, serious, deep, calm, energetic, gentle, dramatic
+# Fine-tune on top of a style (optional):
+# TTS_RATE=+10%
+# TTS_PITCH=+5Hz
+# TTS_VOLUME=+0%
+# Or OpenAI TTS:
+# TTS_PROVIDER=openai
+# OPENAI_TTS_MODEL=tts-1
+# OPENAI_TTS_VOICE=nova
+# OPENAI_TTS_SPEED=1.0
 # Or cloud transcription:
 # TRANSCRIPTION_PROVIDER=openai
 # OPENAI_API_KEY=sk-...

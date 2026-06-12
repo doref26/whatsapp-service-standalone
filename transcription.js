@@ -1,40 +1,12 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import config from './config.js';
+import { resolvePythonExecutable, buildMediaExecEnv } from './lib/media-env.js';
 
 const execFileAsync = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function resolvePythonExecutable() {
-  if (process.env.PYTHON_PATH && existsSync(process.env.PYTHON_PATH)) {
-    return process.env.PYTHON_PATH;
-  }
-
-  const candidates = [
-    process.env.PYTHON_PATH,
-    'python',
-    'python3',
-    join(process.env.LOCALAPPDATA || '', 'Programs', 'Python', 'Python310', 'python.exe'),
-    join(process.env.LOCALAPPDATA || '', 'Programs', 'Python', 'Python311', 'python.exe'),
-    join(process.env.LOCALAPPDATA || '', 'Programs', 'Python', 'Python312', 'python.exe'),
-    'C:\\Python310\\python.exe',
-    'C:\\Python311\\python.exe',
-    'C:\\Python312\\python.exe',
-  ].filter(Boolean);
-
-  for (const candidate of candidates) {
-    if (candidate.includes('\\') || candidate.includes('/')) {
-      if (existsSync(candidate)) return candidate;
-      continue;
-    }
-    return candidate;
-  }
-
-  return 'python';
-}
 
 class TranscriptionService {
   getProviderName() {
@@ -97,11 +69,7 @@ class TranscriptionService {
     console.log(`   Python: ${pythonExe}`);
     console.log(`   Model: ${model}, language: ${language}`);
 
-    const env = { ...process.env };
-    if (process.env.FFMPEG_PATH) {
-      const ffmpegDir = dirname(process.env.FFMPEG_PATH);
-      env.PATH = `${ffmpegDir};${env.PATH || ''}`;
-    }
+    const env = buildMediaExecEnv();
 
     const { stdout, stderr } = await execFileAsync(
       pythonExe,
@@ -109,6 +77,7 @@ class TranscriptionService {
       {
         maxBuffer: 1024 * 1024 * 10,
         env,
+        encoding: 'utf8',
         windowsHide: true,
       },
     );
