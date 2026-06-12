@@ -1,0 +1,45 @@
+# WhatsApp Configuration
+TARGET_GROUP_NAME=
+# Comma-separated chat IDs to monitor (overrides TARGET_GROUP_NAME when set)
+# ALLOWED_CHAT_IDS=120363123456789012@g.us,1234567890@c.us
+BOT_TRIGGER=@bot
+RESPOND_TO_ALL=false
+STANDALONE_BOT_AUTO_REPLY=false
+
+# Historical sync filter (stops startup replay spam)
+# SKIP_HISTORICAL_MESSAGE_FILTER=false
+# MESSAGE_INGEST_SLACK_SEC=120
+# MESSAGE_MAX_AGE_SEC=600
+
+# API Configuration
+API_PORT=3002
+# WHATSAPP_BIND_HOST=127.0.0.1
+WEBHOOK_URL=http://127.0.0.1:3000/whatsapp/webhook
+# WEBHOOK_INTERNAL_FALLBACK=false
+# WEBHOOK_SECRET=your-shared-secret
+# WEBHOOK_INCLUDE_MEDIA=true
+# WEBHOOK_RETRY_INTERVAL_MS=30000
+# WEBHOOK_MAX_RETRIES=10
+# WEBHOOK_TIMEOUT_MS=20000
+API_KEY=
+
+# Voice transcription
+# Local Whisper (default): pip install openai-whisper
+TRANSCRIPTION_PROVIDER=whisper
+WHISPER_MODEL=base
+# WHISPER_LANGUAGE=he
+# Full paths (recommended on Windows when using start-all.bat)
+# PYTHON_PATH=C:\Users\YOUR_USER\AppData\Local\Programs\Python\Python310\python.exe
+# FFMPEG_PATH=C:\Users\YOUR_USER\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.1-full_build\bin\ffmpeg.exe
+# Or cloud transcription:
+# TRANSCRIPTION_PROVIDER=openai
+# OPENAI_API_KEY=sk-...
+
+# WhatsApp client tuning
+# WHATSAPP_INIT_TIMEOUT_MS=180000
+# WHATSAPP_AUTH_TIMEOUT_MS=120000
+# WHATSAPP_QR_MAX_RETRIES=6
+# WHATSAPP_CDP_PORT=9231
+
+# Cloud deployment
+# SESSION_DIR=/tmp/.wwebjs_auth
